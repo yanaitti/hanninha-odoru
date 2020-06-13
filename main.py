@@ -22,6 +22,7 @@ cache = Cache(app, config={
 
 
 '''
+第三版
 カードは12種類
 最初に4枚ずつ配る
 
@@ -79,11 +80,12 @@ mastercards = [
     {'name': 'たくらみ', 'type': 4, 'stock': 2, 'status': 'scheme'},
 
     {'name': 'いぬ', 'type': 5, 'stock': 1, 'status': 'dog'},
-    {'name': 'うわさ', 'type': 6, 'stock': 5, 'status': 'rumor'},
-    {'name': '情報操作', 'type': 7, 'stock': 4, 'status': 'manipulation'},
-    {'name': '取り引き', 'type': 8, 'stock': 4, 'status': 'deal'},
+    {'name': 'うわさ', 'type': 6, 'stock': 4, 'status': 'rumor'},
+    {'name': '情報操作', 'type': 7, 'stock': 3, 'status': 'manipulation'},
+    {'name': '取り引き', 'type': 8, 'stock': 5, 'status': 'deal'},
     {'name': '一般人', 'type': 9, 'stock': 2, 'status': 'general'},
     {'name': '目撃者', 'type': 10, 'stock': 3, 'status': 'witness'},
+    {'name': '少年', 'type': 11, 'stock': 1, 'status': 'boy'},
 ]
 
 pattern = [
@@ -107,12 +109,14 @@ def create_game(nickname=''):
     game = {
         'status': 'waiting',
         'stack': [],
+        'trade': [],
         'players': []}
     player = {}
 
     gameid = str(uuid.uuid4())
     game['gameid'] = gameid
     player['playerid'] = gameid
+    player['criminal'] = False
     player['stocks'] = []
     player['nickname'] = nickname if nickname != '' else gameid
     game['players'].append(player)
@@ -133,6 +137,7 @@ def join_game(gameid, nickname='default'):
 
         playerid = str(uuid.uuid4())
         player['playerid'] = playerid
+        player['criminal'] = False
         player['stocks'] = []
         if nickname == 'default':
             player['nickname'] = playerid
@@ -195,13 +200,79 @@ def start_game(gameid):
 def set_card(gameid, stocknum):
     game = cache.get(gameid)
 
+    # 「犯人カード」は、最後の一枚の時にしか出せない
+    if game['players'][0]['stocks'][stocknum]['type'] == 1:
+        if len(game['players'][0]['stocks']) > 1:
+            return 'ng'
+
+    # 「探偵カード」は、2ターン目から出せる
+    if game['players'][0]['stocks'][stocknum]['type'] == 2:
+        if len(game['stack']) / len(game['players']) < 1:
+            return 'ng'
+
     set_card = game['players'][0]['stocks'].pop(stocknum)
+
     game['stack'].append(set_card)
+
+    # 「たくらみカード」の場合、犯人と同じ側になる
+    if game['players'][0]['stocks'][stocknum]['type'] == 4:
+        game['player'][0]['criminal'] = True
 
     game['status'] = set_card['status']
 
     cache.set(gameid, game)
     return json.dumps(game)
+
+
+# nominate(detective)
+@app.route('/<gameid>/nominate/detective/<playerid>')
+def nominate_detective(gameid, playerid):
+    game = cache.get(gameid)
+    game['status'] = 'starting'
+
+    _stocks = [_player['stocks'] for _player in game['players'] if _player['playerid'] == playerid][0]
+    _criminal = True if len([_card for _card in _stocks if _card['type'] == 1]) == 1 else False
+    if _criminal == True:
+        if len([_card for _card in _stocks if _card['type'] == 3]) < 1:
+            game['status'] = 'end'
+
+    cache.set(gameid, game)
+    return json.dumps(game)
+
+
+# nominate(dog)
+@app.route('/<gameid>/nominate/dog/<playerid>/<int:cardnum>')
+def nominate_ddog(gameid, playerid, cardnum):
+    game = cache.get(gameid)
+    game['status'] = 'starting'
+
+    _stocks = [_player['stocks'] for _player in game['players'] if _player['playerid'] == playerid][0]
+    _criminal = True if _stocks[cardnum]['type'] == 1 else False
+    if _criminal == True:
+        game['status'] = 'end'
+
+    cache.set(gameid, game)
+    return json.dumps(game)
+
+
+# show criminal
+@app.route('/<gameid>/show_criminal')
+def show_criminal(gameid):
+    game = cache.get(gameid)
+
+    criminal = [_player for _player in game['players'] if len([_card for _card in _player['stocks'] if _card['type'] == 1]) > 0]
+
+    return json.dumps(criminal)
+
+
+# trade setting
+@app.route('/<gameid>/trade/setting/<int:setting_num>')
+def show_criminal(gameid, setting_num):
+    game = cache.get(gameid)
+
+    game['trade'] = {'count': setting_num, 'trans': []}
+
+    return json.dumps(criminal)
 
 
 # next to player
