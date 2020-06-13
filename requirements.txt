@@ -1,0 +1,11 @@
+cache==1.0.3
+click==7.1.2
+Flask==1.1.2
+Flask-Caching==1.8.0
+itsdangerous==1.1.0
+Jinja2==2.11.2
+MarkupSafe==1.1.1
+redis==3.5.2
+Werkzeug==1.0.1
+numpy==1.18.1
+Flask-Bootstrap==3.3.7.1
