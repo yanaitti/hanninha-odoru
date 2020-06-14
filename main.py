@@ -200,24 +200,35 @@ def start_game(gameid):
 def set_card(gameid, stocknum):
     game = cache.get(gameid)
 
-    # 「犯人カード」は、最後の一枚の時にしか出せない
     if game['players'][0]['stocks'][stocknum]['type'] == 1:
+        # 「犯人カード」は、最後の一枚の時にしか出せない
         if len(game['players'][0]['stocks']) > 1:
             return 'ng'
-
-    # 「探偵カード」は、2ターン目から出せる
-    if game['players'][0]['stocks'][stocknum]['type'] == 2:
+    elif game['players'][0]['stocks'][stocknum]['type'] == 2:
+        # 「探偵カード」は、2ターン目から出せる
         if len(game['stack']) / len(game['players']) < 1:
             return 'ng'
+    elif game['players'][0]['stocks'][stocknum]['type'] == 4:
+        # 「たくらみカード」の場合、犯人と同じ側になる
+        game['players'][0]['criminal'] = True
+    elif game['players'][0]['stocks'][stocknum]['type'] in [6, 7]:
+        # うわさ
+        # 情報操作
+        senders = [player['playerid'] for player in game['players']]
+        receivers = np.roll(np.array(senders), -1).tolist()
+
+        for idx in range(len(game['players'])):
+            trade = {'sender': senders[idx], 'receiver': receivers[idx], 'card': None }
+            game['trade'].append(trade)
+
+    elif game['players'][0]['stocks'][stocknum]['type'] == 8:
+        # 取り引き
+        trade = {'sender': game['players'][0]['playerid'], 'receiver': None, 'card': None }
+        game['trade'].append(trade)
 
     set_card = game['players'][0]['stocks'].pop(stocknum)
 
     game['stack'].append(set_card)
-
-    # 「たくらみカード」の場合、犯人と同じ側になる
-    if game['players'][0]['stocks'][stocknum]['type'] == 4:
-        game['player'][0]['criminal'] = True
-
     game['status'] = set_card['status']
 
     cache.set(gameid, game)
@@ -242,7 +253,7 @@ def nominate_detective(gameid, playerid):
 
 # nominate(dog)
 @app.route('/<gameid>/nominate/dog/<playerid>/<int:cardnum>')
-def nominate_ddog(gameid, playerid, cardnum):
+def nominate_dog(gameid, playerid, cardnum):
     game = cache.get(gameid)
     game['status'] = 'starting'
 
@@ -265,14 +276,36 @@ def show_criminal(gameid):
     return json.dumps(criminal)
 
 
-# trade setting
-@app.route('/<gameid>/trade/setting/<int:setting_num>')
-def show_criminal(gameid, setting_num):
+# trade card setting with player
+@app.route('/<gameid>/trade/player/<get_playerid>/<int:card_num>')
+def trade_card_w_player(gameid, get_playerid, card_num):
     game = cache.get(gameid)
 
-    game['trade'] = {'count': setting_num, 'trans': []}
+    trades = game['trade']
+    trades[0]['receiver'] = get_playerid
+    trades[0]['card'] = game['players'][0]['stocks'].pop(card_num)
 
-    return json.dumps(criminal)
+    trade = {'sender': get_playerid, 'receiver': game['players'][0]['playerid'], 'card': None}
+    trades.append(trade)
+
+    cache.set(gameid, game)
+    return json.dumps(trades)
+
+
+# trade card setting
+@app.route('/<gameid>/trade/<playerid>/card/<int:card_num>')
+def trade_card(gameid, playerid, card_num):
+    game = cache.get(gameid)
+
+    player_stocks = [player['stocks'] for player in game['players'] if player['playerid'] == playerid][0]
+    if game['status'] in ['rumor', 'deal']:
+        trade = [trade for trade in game['trade'] if trade['sender'] == playerid][0]
+    elif game['status'] == 'manipulation':
+        trade = [trade for trade in game['trade'] if trade['receiver'] == playerid][0]
+    trade['card'] = player_stocks.pop(card_num)
+
+    cache.set(gameid, game)
+    return json.dumps(game['trade'])
 
 
 # next to player
@@ -281,6 +314,13 @@ def next_player(gameid):
     game = cache.get(gameid)
 
     game['players'] = np.roll(np.array(game['players']), -1).tolist()
+
+    for trade in game['trade']:
+        player = [player for player in game['players'] if player['playerid'] == trade['receiver']][0]
+        player['stocks'].append(trade['card'])
+
+    game['trade'] = []
+    game['status'] = 'started'
 
     cache.set(gameid, game)
     return json.dumps(game)

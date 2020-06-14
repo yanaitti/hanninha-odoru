@@ -39,7 +39,11 @@ class MainTestCase(unittest.TestCase):
     def show_criminal(self, gameid):
         return self.app.get(gameid + '/show_criminal', follow_redirects=True)
 
+    def set_trade_player(self, gameid, get_playerid, card_num):
+        return self.app.get(gameid + '/trade/player/' + get_playerid + '/' + str(card_num), follow_redirects=True)
 
+    def set_trade_card(self, gameid, playerid, card_num):
+        return self.app.get(gameid + '/trade/' + playerid + '/card/' + str(card_num), follow_redirects=True)
 
     def test_all_scenario(self):
         random.seed(2)
@@ -82,7 +86,7 @@ class MainTestCase(unittest.TestCase):
         print(data['players'][0])
 
         # Set the card
-        rv = self.set_card(gameid, 2)
+        rv = self.set_card(gameid, 1) # 第一発見者
         data = json.loads(rv.get_data())
         print(data['stack'])
         print(data['players'][0])
@@ -166,10 +170,100 @@ class MainTestCase(unittest.TestCase):
         print(data)
 
 # うわさ
-# 情報操作
+        # Set the card
+        rv = self.set_card(gameid, 0)
+        data = json.loads(rv.get_data())
+
+        for player in data['players']:
+            rv = self.set_trade_card(gameid, player['playerid'], 0)
+            data = json.loads(rv.get_data())
+            # print('#- ' + player['playerid'] + ' -###########################')
+            # print(data)
+        print('#- trade -###########################')
+        print(data)
+
+        rv = self.next(gameid)
+        data = json.loads(rv.get_data())
+        print('#-------#############################')
+        print(data)
+
+        ###########################################################
+        # Next player
+        print('#- NEXT -############################')
+        print(data['players'][0])
+
+# たくらみ
+        # Set the card
+        rv = self.set_card(gameid, 1)
+        data = json.loads(rv.get_data())
+        assert True == data['players'][0]['criminal']
+
+        rv = self.next(gameid)
+        data = json.loads(rv.get_data())
+        print('#-------#############################')
+        print(data)
+
+        ###########################################################
+        # Next player
+        print('#- NEXT -############################')
+        print(data['players'][0])
+
 # 取り引き
+        # Set the card
+        rv = self.set_card(gameid, 0)
+        data = json.loads(rv.get_data())
 
+        trade_player = data['players'][2]
+        rv = self.set_trade_player(gameid, trade_player['playerid'], 0)
+        data = json.loads(rv.get_data())
 
+        rv = self.set_trade_card(gameid, trade_player['playerid'], 1)
+        data = json.loads(rv.get_data())
+
+        rv = self.next(gameid)
+        data = json.loads(rv.get_data())
+        print('#-------#############################')
+        print(data)
+
+        ###########################################################
+        # Next player
+        print('#- NEXT -############################')
+        print(data['players'][0])
+
+# 情報操作
+        # Set the card
+        rv = self.set_card(gameid, 2)
+        data = json.loads(rv.get_data())
+
+        for player in data['players']:
+            rv = self.set_trade_card(gameid, player['playerid'], 0)
+            data = json.loads(rv.get_data())
+        print('#- trade -###########################')
+        print(data)
+
+        rv = self.next(gameid)
+        data = json.loads(rv.get_data())
+        print('#-------#############################')
+        print(data)
+
+        ###########################################################
+        # Next player
+        print('#- NEXT -############################')
+        print(data['players'][0])
+
+        # Set the card
+        rv = self.set_card(gameid, 0)
+        data = json.loads(rv.get_data())
+
+        rv = self.next(gameid)
+        data = json.loads(rv.get_data())
+        print('#-------#############################')
+        print(data)
+
+        ###########################################################
+        # Next player
+        print('#- NEXT -############################')
+        print(data['players'][0])
 
 if __name__ == '__main__':
     unittest.main()
