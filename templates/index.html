@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>街コロ / 街コロ＋(プラス) ONLINE</title>
+    <title>犯人は踊る ONLINE</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <!-- Bootstrap -->
 <!--
@@ -12,7 +12,7 @@
 -->
   </head>
   <body>
-    このゲームは２～４人用となっています。<br/>
+    このゲームは３～８人用となっています。<br/>
     <div id='app2'>
       <input id="cName_inp" placeholder="ニックネームを入力してください"><br/>
       <br/>
@@ -29,79 +29,44 @@
       <span id='applyingList'></span>
       <br/>
       <div id='sec1' style='display:none'>
+        <button id="startGame">ゲームを始める</button><br/>
         <hr/>
-        <button id="getAvailableCards1">街コロのカードを取得</button>&nbsp;&nbsp;
-        <button id="getAvailableCards2">街コロ＋(プラス)のカードを取得</button><br/>
-        <div name="availableCardList" id="availableCardList"></div>
-        <button id="setGameCards">このカードで設定する</button><br/>
-        <hr/>
-        <button id="startGame1">&lt;通常ルールを始める&gt;</button>&nbsp;&nbsp;
-        <button id="startGame2">&lt;拡張ルールを始める&gt;</button><br/>
       </div>
       <div id='sec2' style='display:none'>
-        <hr/>
-        <h4>Board Information</h4>
-        ダイス:<span id='dice'></span><br/>
-        <table id='boardcards' board=1>
-        </table>
-        <hr/>
-        <h4>Your Information</h4>
-        あなたのコイン:<span id='yourcoins'></span><br/>
-        ランドマーク:<br/>
-        <table id='landmarks' board=1>
-        </table>
+        <h4>Board Card</h4>
+        <div id='stackCard'></div><br/>
         <br/>
-        施設:<br/>
-        <table id='facilities' board=1>
-        </table>
+        <h4>Your Cards</h4>
+        <table id='stockCards'>
+        </table><br/>
         <hr/>
       </div>
       <div id='sec3' style='display:none'>
-        &lt;&lt;ダイスフェーズ&gt;&gt;<br/>
-        <input type='radio' name='choice_dice' id="choice_dice" value='1' checked=true>1個</input>&nbsp;&nbsp;
-        <input type='radio' name='choice_dice' id="choice_dice" value='2' disabled="disabled">2個</input><br/>
-        <input type='hidden' id='hide_dice' value='0'/>
-        <button id="roll_dice">ダイスを振る</button><br/>
+        <select name='sel_stockcards' id="sel_stockcards"></select><br/>
+        <button id="set_card">カードを選択する</button><br/>
         <br/>
-        <b><span id='yourdice'></span></b><br/>
-        <button id='plus2' disabled>合計値を+2</button>
-        <br/>
-        <button id="judgement">判定をする</button><br/>
-        <br/>
-        &lt;&lt;購入フェーズ&gt;&gt;<br/>
-        <table>
-          <tr>
-            <td align='center'>
-              ランドマーク<br/>
-              <select name='sel_buy_landmark' id="sel_buy_landmark"></select><br/>
-              <button id="buy_landmark">購入する</button><br/>
-            </td>
-            <td align='center'>
-              施設<br/>
-              <select name='sel_buy_facility' id="sel_buy_facility"></select><br/>
-              <button id="buy_facility">購入する</button><br/>
-            </td>
-          </tr>
-        </table>
-        <br/>
-        &lt;&lt;終了フェーズ&gt;&gt;<br/>
-        <button id="next_player">次の人へ</button><br/>
+        追加の操作がある場合、操作をしてから「次へ」を押してください。<br/>
+        <button id="next">次へ</button><br/>
         <hr/>
       </div>
       <div id='sec4' style='display:none'>
-        カード指定<br/>
-        -&nbsp;あなたのカード:<select name='sel_card1' id="sel_card1"></select><br/>
-        -&nbsp;相手のカード:<select name='sel_card2' id="sel_card2"></select><br/>
-        プレイヤー指定<br/>
-        <select name='sel_player1' id="sel_player1"></select><br/>
-        <button id="trade_card">カードを交換する</button><br/>
+        ＝取り引き＝<br/>
+        渡す相手と、カードを選択してください<br/>
+        <br/>
+        渡す相手:<br/>
+        <select name='trade_players' id="trade_players"></select><br/>
+        渡すカード:<br/>
+        <select name='trade_cards1' id="trade_cards1"></select><br/>
+        <button id="trade_card_w_player">交換する</button><br/>
+        <hr/>
       </div>
       <div id='sec5' style='display:none'>
-        プレイヤー指定<br/>
-        <select name='sel_player2' id="sel_player2"></select><br/>
-        <button id="get_point">ポイントをもらう</button><br/>
+        ＝うわさ、情報操作、取り引き＝<br/>
+        渡す（もらう）カードを選択してください
+        <select name='trade_cards2' id="trade_cards2"></select><br/>
+        <button id="trade_card">カードを渡す（もらう）</button><br/>
+        <hr/>
       </div>
-      <br/>
       <span id='message'></span><br/>
     </div>
 
@@ -127,10 +92,9 @@
           $('#gId').text(data);
           $('#cId').text(data);
           $('#cName').text($('#cName_inp').val());
-          $('#gStatus').text('waiting');
+          $('#sec1').show();
           gId = data;
           cId = data;
-          $('#sec1').show();
           timer = setTimeout(status_check(gId, cId), timeout)
         })
         .fail(function() {
@@ -141,7 +105,7 @@
       // Join Game
       $('#joinGame').click(function() {
         $('#message').empty();
-        $.ajax($('#gId_inp').val() + '/join/' + $('#cName_inp').val(),
+        $.getJSON($('#gId_inp').val() + '/join/' + $('#cName_inp').val(),
           {
             type: 'get',
           }
@@ -149,12 +113,12 @@
         .done(function(data) {
           $('#createGame').prop("disabled", true);
           $('#joinGame').prop("disabled", true);
-          _tmp = data.split(' ,');
-          $('#cId').text(_tmp[0]);
-          $('#cName').text(_tmp[1]);
-          $('#gStatus').text(_tmp[2]);
+          console.log(data);
           gId = $('#gId_inp').val();
-          cId = _tmp[0];
+          cId = data.playerid;
+          $('#gId').text(gId);
+          $('#cId').text(cId);
+          $('#cName').text(data.nickname);
           timer = setTimeout(status_check(gId, cId), timeout)
         })
         .fail(function() {
@@ -162,10 +126,9 @@
         });
       });
 
-      // <通常ルール>
-      $('#startGame1').click(function() {
+      $('#startGame').click(function() {
         $('#message').empty();
-        $.ajax(gId + '/start',
+        $.getJSON(gId + '/start',
           {
             type: 'get',
           }
@@ -177,10 +140,26 @@
         });
       });
 
-      // <拡張ルール>
-      $('#startGame2').click(function() {
+      // カードを場に置く
+      $('#set_card').click(function() {
         $('#message').empty();
-        $.ajax(gId + '/start/ext',
+        $.ajax(gId + '/set/' + $('#sel_stockcards').val(),
+          {
+            type: 'get',
+          }
+        )
+        .done(function(data) {
+          $('#set_card').prop("disabled", true);
+        })
+        .fail(function() {
+          $('#message').text('エラーが発生しました');
+        });
+      });
+
+      // trade card with player
+      $('#trade_card_w_player').click(function() {
+        $('#message').empty();
+        $.getJSON(gId + '/trade/player/' + $('#trade_players').val() + '/' + $('#trade_cards1').val(),
           {
             type: 'get',
           }
@@ -190,208 +169,21 @@
         .fail(function() {
           $('#message').text('エラーが発生しました');
         });
-      });
-
-      // 街コロの有効カード取得
-      $('#getAvailableCards1').click(function() {
-        $('#message').empty();
-        $.getJSON(gId + '/availablelists/0',
-          {
-            type: 'get',
-          }
-        )
-        .done(function(data) {
-          // console.log(data);
-          $('#availableCardList').empty();
-          for(var mIdx in data){
-            if(data[mIdx].available){
-              $('#availableCardList').append('<input type="checkbox" name="cards[]" value="'+mIdx+'" checked>'+data[mIdx].name+'<br/>');
-            }else{
-              $('#availableCardList').append('<input type="checkbox" name="cards[]" value="'+mIdx+'" disabled>'+data[mIdx].name+'<br/>');
-            }
-          }
-        })
-        .fail(function() {
-          $('#message').text('エラーが発生しました');
-        });
-      });
-
-      // 街コロ＋の有効カード取得
-      $('#getAvailableCards2').click(function() {
-        $('#message').empty();
-        $.getJSON(gId + '/availablelists/1',
-          {
-            type: 'get',
-          }
-        )
-        .done(function(data) {
-          // console.log(data);
-          $('#availableCardList').empty();
-          for(var mIdx in data){
-            if(data[mIdx].available){
-              $('#availableCardList').append('<input type="checkbox" name="cards[]" value="'+mIdx+'" checked>'+data[mIdx].name+'<br/>');
-            }else{
-              $('#availableCardList').append('<input type="checkbox" name="cards[]" value="'+mIdx+'" disabled>'+data[mIdx].name+'<br/>');
-            }
-          }
-        })
-        .fail(function() {
-          $('#message').text('エラーが発生しました');
-        });
-      });
-
-      // 使用カードを設定
-      $('#setGameCards').click(function() {
-        $('#message').empty();
-        var selCards = [];
-        $('input[name="cards[]"]:checked').each(function(){selCards.push($(this).val());});
-        console.log(selCards);
-        $.getJSON(gId + '/setup/' + selCards,
-          {
-            type: 'get',
-          }
-        )
-        .done(function(data) {
-          $('#availableCardList').empty();
-          $('#setGameCards').prop('disabled', true);
-          $('#getAvailableCards1').prop('disabled', true);
-          $('#getAvailableCards2').prop('disabled', true);
-        })
-        .fail(function() {
-          $('#message').text('エラーが発生しました');
-        });
-      });
-
-      // 施設の購入
-      $('#buy_facility').click(function() {
-        $('#message').empty();
-        $.ajax(gId + '/' + cId + '/buy/facility/' + $('#sel_buy_facility').val(),
-          {
-            type: 'get',
-          }
-        )
-        .done(function(data) {
-          $('#buy_landmark').prop("disabled", true);
-          $('#buy_facility').prop("disabled", true);
-        })
-        .fail(function() {
-          $('#message').text('エラーが発生しました');
-        });
-      });
-
-      // ランドマークの購入
-      $('#buy_landmark').click(function() {
-        $('#message').empty();
-        $.ajax(gId + '/' + cId + '/buy/landmark/' + $('#sel_buy_landmark').val(),
-          {
-            type: 'get',
-          }
-        )
-        .done(function(data) {
-          $('#buy_landmark').prop("disabled", true);
-          $('#buy_facility').prop("disabled", true);
-        })
-        .fail(function() {
-          $('#message').text('エラーが発生しました');
-        });
-      });
-
-      // roll the dice
-      $('#roll_dice').click(function() {
-        $('#message').empty();
-        $.getJSON(gId + '/roll/' + $('input[name="choice_dice"]:checked').val(),
-          {
-            type: 'get',
-          }
-        )
-        .done(function(data) {
-          $('#hide_dice').val('0');
-          for(dIdx in data){
-            $('#hide_dice').val(Number($('#hide_dice').val()) + Number(data[dIdx]));
-          }
-        })
-        .fail(function() {
-          $('#message').text('エラーが発生しました');
-        });
-      });
-
-      // judgement
-      $('#judgement').click(function() {
-        $('#message').empty();
-        $.getJSON(gId + '/judgement/' + $('#hide_dice').val(),
-          {
-            type: 'get',
-          }
-        )
-        .done(function(data) {
-          $('#judgement').prop("disabled", true);
-          // alert($.inArray('ok', data));
-          if($.inArray('choicePlayer', data) > 0){
-            $('#sec5').show();
-          }
-          if($.inArray('tradeCard', data) > 0){
-            $('#sec4').show();
-          }
-        })
-        .fail(function() {
-          $('#message').text('エラーが発生しました');
-        });
-      });
-
-      // trade_card
-      $('#trade_card').click(function() {
-        $('#message').empty();
-        $.ajax(gId + '/' + cId + '/trade/' + $('#sel_player2').val() + '/' + $('#sel_card1').val() + '/' + $('#sel_card2').val(),
-          {
-            type: 'get',
-          }
-        )
-        .done(function(data) {
-        })
-        .fail(function() {
-          $('#message').text('エラーが発生しました');
-        });
-      });
-
-      // get_point
-      $('#get_point').click(function() {
-        $('#message').empty();
-        $.ajax(gId + '/' + cId + '/choice/' + $('#sel_player2').val(),
-          {
-            type: 'get',
-          }
-        )
-        .done(function(data) {
-        })
-        .fail(function() {
-          $('#message').text('エラーが発生しました');
-        });
-      });
-
-      // plus2
-      $('#plus2').click(function() {
-        $('#hide_dice').val(Number($('#hide_dice').val()) + 2);
-        $('#plus2').prop('disabled', true);
       });
 
       // Next player
-      $('#next_player').click(function() {
+      $('#next').click(function() {
         $('#message').empty();
         var path = gId + '/next'
-        if(!$('#buy_landmark').prop('disabled') && !$('#buy_facility').prop('disabled')){
-          path = path + '/1'
-        }
-        $.ajax(path,
+        $.getJSON(path,
           {
             type: 'get',
           }
         )
         .done(function(data) {
           // console.log(data)
-          $('#buy_facility').prop("disabled", false);
-          $('#buy_landmark').prop("disabled", false);
-          $('#roll_dice').prop("disabled", false);
-          $('#judgement').prop("disabled", false);
+          $('#sec4').hide();
+          $('#set_card').prop("disabled", false);
           $('#message').text('次に移動しました');
         })
         .fail(function() {
@@ -429,103 +221,74 @@
             case 'started':
               $('#sec2').show();
 
+              if(data.stack.length > 0){
+                $('#stackCard').text(data.stack.slice(-1)[0].name);
+              }else{
+                $('#stackCard').text('');
+              }
+
               if(data.players[0].playerid == cId){
                 $('#sec3').show();
               }else{
                 $('#sec3').hide();
-                $('#sec4').hide();
-                $('#sec5').hide();
               }
-              // $('#sec4').show();
-              // $('#sec5').show();
 
-              console.log('cId:' + cId)
-
-              $('#yourcoins').text(data.players[playerPos].coins);
-
-              var gCnt = 0;
-
-              $('#boardcards').empty();
-              for(var gIdx in data.boardcards){
-                if(gCnt % 5 == 0){
-                  var rowtable = $('<tr></tr>').appendTo($('#boardcards'));
+              $('#stockCards').empty();
+              var rowtable = $('<tr></tr>').appendTo($('#stockCards'));
+              for(var sIdx in data.players[playerPos].stocks){
+                stock = data.players[playerPos].stocks[sIdx]
+                $('<td align="center">' + stock.name + '</td>').appendTo(rowtable);
+              }
+              // console.log(data.players[playerPos]);
+              if(data.players[playerPos].stocks.length != $('#sel_stockcards').children('option').length){
+                $('#sel_stockcards').children().remove();
+                for(var sIdx in data.players[playerPos].stocks){
+                  stock = data.players[playerPos].stocks[sIdx]
+                  $('#sel_stockcards').append('<option value="' + sIdx + '">' + stock.name + '</option>');
                 }
-                if(data.boardcards[gIdx].cnt > 0){
-                  switch(data.boardcards[gIdx].type){
-                    case 1:
-                      // green
-                      $('<td align="center"><font color="#00b300">■</font>(' + data.boardcards[gIdx].score + ')<br/>' + data.boardcards[gIdx].name + '<br/>=' + data.boardcards[gIdx].cost + '=<br/>&lt;' + data.boardcards[gIdx].cnt + '&gt;</td>').appendTo(rowtable);
-                      break;
-                    case 2:
-                      // red
-                      $('<td align="center"><font color="#b30000">▲</font>(' + data.boardcards[gIdx].score + ')<br/>' + data.boardcards[gIdx].name + '<br/>=' + data.boardcards[gIdx].cost + '=<br/>&lt;' + data.boardcards[gIdx].cnt + '&gt;</td>').appendTo(rowtable);
-                      break;
-                    case 3:
-                      // blue
-                      $('<td align="center"><font color="#0077b3">●</font>(' + data.boardcards[gIdx].score + ')<br/>' + data.boardcards[gIdx].name + '<br/>=' + data.boardcards[gIdx].cost + '=<br/>&lt;' + data.boardcards[gIdx].cnt + '&gt;</td>').appendTo(rowtable);
-                      break;
+              }
+              break;
+            case 'deal':
+              for(var tIdx in data.trade){
+                if(data.trade[0].sender == cId && data.trade[tIdx].card_num == null){
+                  $('#sec4').show();
+                  $('#sec5').hide();
+                }else if(data.trade[tIdx].sender == cId && data.trade[tIdx].card_num == null){
+                  $('#sec4').hide();
+                  $('#sec5').show();
+                }else{
+                  $('#sec4').hide();
+                  $('#sec5').hide();
+                }
+              }
+
+              $('#stockCards').empty();
+              var rowtable = $('<tr></tr>').appendTo($('#stockCards'));
+              for(var sIdx in data.players[playerPos].stocks){
+                stock = data.players[playerPos].stocks[sIdx]
+                $('<td align="center">' + stock.name + '</td>').appendTo(rowtable);
+              }
+
+              if(data.players[playerPos].stocks.length != $('#trade_cards1').children('option').length){
+                $('#trade_cards1').children().remove();
+                for(var sIdx in data.players[playerPos].stocks){
+                  stock = data.players[playerPos].stocks[sIdx]
+                  $('#trade_cards1').append('<option value="' + sIdx + '">' + stock.name + '</option>');
+                }
+              }
+
+              if((data.players.length - 1) != $('#trade_players').children('option').length){
+                $('#trade_players').children().remove();
+                for(var pIdx in data.players){
+                  if(pIdx != playerPos){
+                    $('#trade_players').append('<option value="'+data.players[pIdx].playerid+'">'+data.players[pIdx].nickname+'</option>');
                   }
-                  gCnt++;
-                }
-              }
-              if(data.boardcards.length != $('#sel_buy_facility').children('option').length){
-                $('#sel_buy_facility').children().remove();
-                for(var gIdx in data.boardcards){
-                  $('#sel_buy_facility').append('<option value="'+gIdx+'">' + data.boardcards[gIdx].name + '</option>');
-                }
-                $('#sel_card1').children().remove();
-                $('#sel_card2').children().remove();
-                for(var gIdx in data.boardcards){
-                  if(data.boardcards[gIdx].style != 'ランドマーク'){
-                    $('#sel_card1').append('<option value="'+gIdx+'">' + data.boardcards[gIdx].name + '</option>');
-                    $('#sel_card2').append('<option value="'+gIdx+'">' + data.boardcards[gIdx].name + '</option>');
-                  }
                 }
               }
 
-              $('#landmarks').empty();
-              var rowtable = $('<tr></tr>').appendTo($('#landmarks'));
-              for(var pIdx in data.players[playerPos].landmarks){
-                landmark = data.players[playerPos].landmarks[pIdx]
-                $('<td align="center">' + landmark.name + '<br/>=' + landmark.cost + '=<br/>&lt;' + (landmark.turn == true? '建設済み':'工事中') + '&gt;</td>').appendTo(rowtable);
-              }
-              if(data.players[playerPos].landmarks.length != $('#sel_buy_landmark').children('option').length){
-                $('#sel_buy_landmark').children().remove();
-                for(var pIdx in data.players[playerPos].landmarks){
-                  landmark = data.players[playerPos].landmarks[pIdx]
-                  $('#sel_buy_landmark').append('<option value="'+pIdx+'">' + landmark.name + '</option>');
-                }
-              }
-
-              $('#facilities').empty();
-              for(var fIdx in data.players[playerPos].facilities){
-                if(fIdx % 10 == 0){
-                  var rowtable = $('<tr></tr>').appendTo($('#facilities'));
-                }
-                facility = data.players[playerPos].facilities[fIdx]
-                // $('<td align="center">' + facility.name + '<br/></td>').appendTo(rowtable);
-                switch(facility.type){
-                  case 1:
-                    // green
-                    $('<td align="center"><font color="#00b300">■</font>(' + facility.score + ')<br/>' + facility.name + '</td>').appendTo(rowtable);
-                    break;
-                  case 2:
-                    // red
-                    $('<td align="center"><font color="#b30000">▲</font>(' + facility.score + ')<br/>' + facility.name + '</td>').appendTo(rowtable);
-                    break;
-                  case 3:
-                    // blue
-                    $('<td align="center"><font color="#0077b3">●</font>(' + facility.score + ')<br/>' + facility.name + '</td>').appendTo(rowtable);
-                    break;
-                }
-              }
-
-              $('#dice').text(data.dice.join(','));
-              $('#yourdice').text(data.dice.join(','));
-              if(data.players[playerPos].dices == 2){
-                $('input[type="radio"]').prop("disabled", false);
-              }
-
+              break;
+            case 'manipulation':
+            case 'rumor':
               if(data.players.length != $('#sel_player1').children('option').length){
                 $('#sel_player1').children().remove();
                 $('#sel_player2').children().remove();
@@ -536,19 +299,14 @@
                   }
                 }
               }
-              if((Number($('#hide_dice').val()) > 10)&&(data.pack == 1)){
-                if(data.players[pIdx].landmarks[5].turn == true){
-                  $('#plus2').prop("disabled", false);
-                }
-              }
 
               break;
             case 'end':
-              $('#gameover').text('Game Over');
-              $('input[type="radio"]').prop("disabled", false);
-              $('#setteam').prop("disabled", false);
-              $('#sec4').css('display', 'none');
-              $('#card_sel').children().remove();
+              // $('#gameover').text('Game Over');
+              // $('input[type="radio"]').prop("disabled", false);
+              // $('#setteam').prop("disabled", false);
+              // $('#sec4').css('display', 'none');
+              // $('#card_sel').children().remove();
               break;
           }
         })

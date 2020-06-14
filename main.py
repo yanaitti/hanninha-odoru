@@ -73,18 +73,18 @@ cache = Cache(app, config={
 '''
 
 mastercards = [
-    {'name': '第一発見者', 'type': 0, 'stock': 1, 'status': 'starting'},
+    {'name': '第一発見者', 'type': 0, 'stock': 1, 'status': 'started'},
     {'name': '犯人', 'type': 1, 'stock': 1, 'status': 'end'},
     {'name': '探偵', 'type': 2, 'stock': 4, 'status': 'detective'},
-    {'name': 'アリバイ', 'type': 3, 'stock': 5, 'status': 'alibi'},
+    {'name': 'アリバイ', 'type': 3, 'stock': 5, 'status': 'started'},
     {'name': 'たくらみ', 'type': 4, 'stock': 2, 'status': 'scheme'},
 
     {'name': 'いぬ', 'type': 5, 'stock': 1, 'status': 'dog'},
     {'name': 'うわさ', 'type': 6, 'stock': 4, 'status': 'rumor'},
     {'name': '情報操作', 'type': 7, 'stock': 3, 'status': 'manipulation'},
     {'name': '取り引き', 'type': 8, 'stock': 5, 'status': 'deal'},
-    {'name': '一般人', 'type': 9, 'stock': 2, 'status': 'general'},
-    {'name': '目撃者', 'type': 10, 'stock': 3, 'status': 'witness'},
+    {'name': '一般人', 'type': 9, 'stock': 2, 'status': 'started'},
+    {'name': '目撃者', 'type': 10, 'stock': 3, 'status': 'started'},
     {'name': '少年', 'type': 11, 'stock': 1, 'status': 'boy'},
 ]
 
@@ -335,6 +335,6 @@ def game_status(gameid):
 
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-    # app.run(debug=True)
+    # port = int(os.getenv("PORT", 5000))
+    # app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
