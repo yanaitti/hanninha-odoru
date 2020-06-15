@@ -74,6 +74,19 @@
     var timeout = 1000;
     var timer = '';
 
+    // ■動作確認カード■
+    // 犯人
+    // 探偵
+    // 済）第一発見者
+    // 済）アリバイ
+    // 済）たくらみ
+    // いぬ
+    // 目撃者
+    // 情報交換
+    // うわさ
+    // 取り引き
+    // 済）一般人
+
     $(function() {
       var gId = '';
       var cId = '';
@@ -165,6 +178,31 @@
           }
         )
         .done(function(data) {
+          $('#sec4').hide();
+          $('#sec5').hide();
+          $('#trade_cards1').children().remove();
+          $('#trade_cards2').children().remove();
+          $('#sel_stockcards').children().remove();
+        })
+        .fail(function() {
+          $('#message').text('エラーが発生しました');
+        });
+      });
+
+      // trade card
+      $('#trade_card').click(function() {
+        $('#message').empty();
+        $.getJSON(gId + '/trade/' + cId + '/card/' + $('#trade_cards2').val(),
+          {
+            type: 'get',
+          }
+        )
+        .done(function(data) {
+          $('#sec4').hide();
+          $('#sec5').hide();
+          $('#trade_cards1').children().remove();
+          $('#trade_cards2').children().remove();
+          $('#sel_stockcards').children().remove();
         })
         .fail(function() {
           $('#message').text('エラーが発生しました');
@@ -220,6 +258,10 @@
           switch(data.status){
             case 'started':
               $('#sec2').show();
+              $('#sec4').hide();
+              $('#sec5').hide();
+              $('#trade_cards1').children().remove();
+              $('#trade_cards2').children().remove();
 
               if(data.stack.length > 0){
                 $('#stackCard').text(data.stack.slice(-1)[0].name);
@@ -248,32 +290,30 @@
                 }
               }
               break;
+            // ==========================
             case 'deal':
               for(var tIdx in data.trade){
-                if(data.trade[0].sender == cId && data.trade[tIdx].card_num == null){
-                  $('#sec4').show();
-                  $('#sec5').hide();
-                }else if(data.trade[tIdx].sender == cId && data.trade[tIdx].card_num == null){
-                  $('#sec4').hide();
-                  $('#sec5').show();
+                if(data.trade[tIdx].card == null){
+                  if(data.trade[tIdx].sender == cId){
+                    if(tIdx == 0){
+                      $('#sec4').show();
+                    }else{
+                      $('#sec5').show();
+                    }
+                  }
                 }else{
                   $('#sec4').hide();
                   $('#sec5').hide();
                 }
               }
 
-              $('#stockCards').empty();
-              var rowtable = $('<tr></tr>').appendTo($('#stockCards'));
-              for(var sIdx in data.players[playerPos].stocks){
-                stock = data.players[playerPos].stocks[sIdx]
-                $('<td align="center">' + stock.name + '</td>').appendTo(rowtable);
-              }
-
               if(data.players[playerPos].stocks.length != $('#trade_cards1').children('option').length){
                 $('#trade_cards1').children().remove();
+                $('#trade_cards2').children().remove();
                 for(var sIdx in data.players[playerPos].stocks){
                   stock = data.players[playerPos].stocks[sIdx]
                   $('#trade_cards1').append('<option value="' + sIdx + '">' + stock.name + '</option>');
+                  $('#trade_cards2').append('<option value="' + sIdx + '">' + stock.name + '</option>');
                 }
               }
 
@@ -287,16 +327,52 @@
               }
 
               break;
-            case 'manipulation':
+            // ==========================
+            // 「うわさ」
+            // 全てのプレイヤーは右隣りのプレイヤーの手札からカードを1枚引きます。
             case 'rumor':
-              if(data.players.length != $('#sel_player1').children('option').length){
-                $('#sel_player1').children().remove();
-                $('#sel_player2').children().remove();
-                for(var pIdx in data.players){
-                  if(pIdx != playerPos){
-                    $('#sel_player1').append('<option value="'+data.players[pIdx].playerid+'">'+data.players[pIdx].nickname+'</option>');
-                    $('#sel_player2').append('<option value="'+data.players[pIdx].playerid+'">'+data.players[pIdx].nickname+'</option>');
+              for(var tIdx in data.trade){
+                if(data.trade[tIdx].receiver == cId){
+                  if(data.trade[tIdx].card == null){
+                    $('#sec5').show();
+                  }else{
+                    $('#sec5').hide();
                   }
+                }
+              }
+              // console.log('rumor:' + data);
+
+              prevPlayerPos = (data.trade.length + playerPos - 1) % data.trade.length;
+              if(data.players[prevPlayerPos].stocks.length != $('#trade_cards2').children('option').length){
+                $('#trade_cards2').children().remove();
+                for(var sIdx in data.players[prevPlayerPos].stocks){
+                  stock = data.players[prevPlayerPos].stocks[sIdx]
+                  // $('#trade_cards2').append('<option value="' + sIdx + '">' + stock.name + '</option>');
+                  $('#trade_cards2').append('<option value="' + sIdx + '">*****</option>');
+                }
+              }
+
+              break;
+            // =========================
+            // 「情報交換」
+            // 全てのプレイヤーは左隣のプレイヤーにカードを1枚同時に渡します。
+            case 'manipulation':
+              for(var tIdx in data.trade){
+                if(data.trade[tIdx].sender == cId){
+                  if(data.trade[tIdx].card == null){
+                   $('#sec5').show();
+                 }else{
+                   $('#sec5').hide();
+                 }
+                }
+              }
+              // console.log('manipulation:' + data);
+
+              if(data.players[playerPos].stocks.length != $('#trade_cards2').children('option').length){
+                $('#trade_cards2').children().remove();
+                for(var sIdx in data.players[playerPos].stocks){
+                  stock = data.players[playerPos].stocks[sIdx]
+                  $('#trade_cards2').append('<option value="' + sIdx + '">' + stock.name + '</option>');
                 }
               }
 

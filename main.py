@@ -297,11 +297,12 @@ def trade_card_w_player(gameid, get_playerid, card_num):
 def trade_card(gameid, playerid, card_num):
     game = cache.get(gameid)
 
-    player_stocks = [player['stocks'] for player in game['players'] if player['playerid'] == playerid][0]
-    if game['status'] in ['rumor', 'deal']:
+    if game['status'] in ['deal', 'manipulation']:
         trade = [trade for trade in game['trade'] if trade['sender'] == playerid][0]
-    elif game['status'] == 'manipulation':
+    elif game['status'] == 'rumor':
         trade = [trade for trade in game['trade'] if trade['receiver'] == playerid][0]
+
+    player_stocks = [player['stocks'] for player in game['players'] if player['playerid'] == trade['sender']][0]
     trade['card'] = player_stocks.pop(card_num)
 
     cache.set(gameid, game)
@@ -335,6 +336,6 @@ def game_status(gameid):
 
 
 if __name__ == "__main__":
-    # port = int(os.getenv("PORT", 5000))
-    # app.run(host="0.0.0.0", port=port)
-    app.run(debug=True)
+    port = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+    # app.run(debug=True)
