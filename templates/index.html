@@ -67,6 +67,13 @@
         <button id="trade_card">カードを渡す（もらう）</button><br/>
         <hr/>
       </div>
+      <div id='sec6' style='display:none'>
+        カードを見る相手:<br/>
+        <select name='check_players' id="check_players"></select><br/>
+        <button id="show_card">カードを見る</button><br/>
+        <table id='showCards'>
+        <hr/>
+      </div>
       <span id='message'></span><br/>
     </div>
 
@@ -82,9 +89,9 @@
     // 済）たくらみ
     // いぬ
     // 目撃者
-    // 情報交換
-    // うわさ
-    // 取り引き
+    // 済）情報交換
+    // 済）うわさ
+    // 済）取り引き
     // 済）一般人
 
     $(function() {
@@ -209,6 +216,33 @@
         });
       });
 
+      // show card
+      $('#show_card').click(function() {
+        $('#message').empty();
+        var path = gId + '/show_others/' + $('#check_players').val();
+        $.getJSON(path,
+          {
+            type: 'get',
+          }
+        )
+        .done(function(data) {
+          console.log(data);
+          $('#showCards').empty();
+          var rowtable = $('<tr></tr>').appendTo($('#showCards'));
+          for(var sIdx in data.stocks){
+            stock = data.stocks[sIdx]
+            $('<td align="center">' + stock.name + '</td>').appendTo(rowtable);
+          }
+          // for(var sIdx in data.stocks){
+          //   $('#showCards').append(data.stocks[sIdx].name);
+          // }
+          $('#show_card').prop('disabled', true);
+        })
+        .fail(function() {
+          $('#message').text('エラーが発生しました');
+        });
+      });
+
       // Next player
       $('#next').click(function() {
         $('#message').empty();
@@ -221,7 +255,10 @@
         .done(function(data) {
           // console.log(data)
           $('#sec4').hide();
+          $('#sec5').hide();
+          $('#sec6').hide();
           $('#set_card').prop("disabled", false);
+          $('#show_card').prop('disabled', false);
           $('#message').text('次に移動しました');
         })
         .fail(function() {
@@ -376,6 +413,18 @@
                 }
               }
 
+              break;
+            case 'witness':
+              $('#sec6').show();
+
+              if((data.players.length - 1) != $('#check_players').children('option').length){
+                $('#check_players').children().remove();
+                for(var pIdx in data.players){
+                  if(pIdx != playerPos){
+                    $('#check_players').append('<option value="'+data.players[pIdx].playerid+'">'+data.players[pIdx].nickname+'</option>');
+                  }
+                }
+              }
               break;
             case 'end':
               // $('#gameover').text('Game Over');

@@ -84,7 +84,7 @@ mastercards = [
     {'name': '情報操作', 'type': 7, 'stock': 3, 'status': 'manipulation'},
     {'name': '取り引き', 'type': 8, 'stock': 5, 'status': 'deal'},
     {'name': '一般人', 'type': 9, 'stock': 2, 'status': 'started'},
-    {'name': '目撃者', 'type': 10, 'stock': 3, 'status': 'started'},
+    {'name': '目撃者', 'type': 10, 'stock': 3, 'status': 'witness'},
     {'name': '少年', 'type': 11, 'stock': 1, 'status': 'boy'},
 ]
 
@@ -274,6 +274,16 @@ def show_criminal(gameid):
     criminal = [_player for _player in game['players'] if len([_card for _card in _player['stocks'] if _card['type'] == 1]) > 0]
 
     return json.dumps(criminal)
+
+
+# show other player card
+@app.route('/<gameid>/show_others/<playerid>')
+def show_others(gameid, playerid):
+    game = cache.get(gameid)
+
+    player = [_player for _player in game['players'] if _player['playerid'] == playerid][0]
+
+    return json.dumps(player)
 
 
 # trade card setting with player
