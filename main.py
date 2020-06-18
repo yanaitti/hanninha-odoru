@@ -160,6 +160,8 @@ def start_game(gameid):
     app.logger.debug(gameid)
     app.logger.debug(game)
     game['status'] = 'started'
+    game['stack'] = []
+    game['trade'] = []
 
     # initial card setting
     stocks = []
@@ -183,6 +185,8 @@ def start_game(gameid):
     random.shuffle(stocks)
 
     for player in game['players']:
+        player['criminal'] = False
+        player['stocks'] = []
         for idx in range(4):
             player['stocks'].append(stocks.pop(0))
 

@@ -104,20 +104,6 @@
     var timeout = 1000;
     var timer = '';
 
-    // ■動作確認カード■
-    // 済）犯人
-    // 済）探偵
-    // 済）第一発見者
-    // 済）アリバイ
-    // 済）たくらみ
-    // いぬ
-    // 済）目撃者
-    // 済）情報交換
-    // 済）うわさ
-    // 済）取り引き
-    // 済）一般人
-    // 済）少年
-
     $(function() {
       var gId = '';
       var cId = '';
@@ -222,6 +208,9 @@
             case '探偵':
               $('#sec8').show();
               break;
+            case 'いぬ':
+              $('#sec9').show();
+              break;
           }
         })
         .fail(function() {
@@ -299,7 +288,7 @@
       // show card(犬用)
       $('#show_card2').click(function() {
         $('#message').empty();
-        var path = gId + '/show_others/' + $('#check_players').val();
+        var path = gId + '/show_others/' + $('#suspect_players2').val();
         $.getJSON(path,
           {
             type: 'get',
