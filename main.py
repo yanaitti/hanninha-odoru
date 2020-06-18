@@ -239,7 +239,7 @@ def set_card(gameid, stocknum):
 @app.route('/<gameid>/nominate/detective/<playerid>')
 def nominate_detective(gameid, playerid):
     game = cache.get(gameid)
-    game['status'] = 'starting'
+    game['status'] = 'started'
 
     _stocks = [_player['stocks'] for _player in game['players'] if _player['playerid'] == playerid][0]
     _criminal = True if len([_card for _card in _stocks if _card['type'] == 1]) == 1 else False
@@ -255,7 +255,7 @@ def nominate_detective(gameid, playerid):
 @app.route('/<gameid>/nominate/dog/<playerid>/<int:cardnum>')
 def nominate_dog(gameid, playerid, cardnum):
     game = cache.get(gameid)
-    game['status'] = 'starting'
+    game['status'] = 'started'
 
     _stocks = [_player['stocks'] for _player in game['players'] if _player['playerid'] == playerid][0]
     _criminal = True if _stocks[cardnum]['type'] == 1 else False

@@ -68,10 +68,33 @@
         <hr/>
       </div>
       <div id='sec6' style='display:none'>
+        ＝目撃者＝<br/>
         カードを見る相手:<br/>
         <select name='check_players' id="check_players"></select><br/>
         <button id="show_card">カードを見る</button><br/>
-        <table id='showCards'>
+        <table id='showCards'></table><br/>
+        <hr/>
+      </div>
+      <div id='sec7' style='display:none'>
+        ＝少年＝<br/>
+        「犯人」カードは「<span id='criminal_player'></span>」が持っています。<br/>
+        <hr/>
+      </div>
+      <div id='sec8' style='display:none'>
+        ＝探偵＝<br/>
+        犯人を指定する:<br/>
+        <select name='suspect_players' id="suspect_players"></select><br/>
+        <button id="suspect_card">指名する</button><br/>
+        <hr/>
+      </div>
+      <div id='sec9' style='display:none'>
+        ＝犬＝<br/>
+        犯人を指定する:<br/>
+        <select name='suspect_players2' id="suspect_players2"></select><br/>
+        <button id="show_card2">指名する</button><br/>
+        犯人カードを指定する:<br/>
+        <select name='showCards2' id="showCards2"></select><br/>
+        <button id="suspect_card2">指名する</button><br/>
         <hr/>
       </div>
       <span id='message'></span><br/>
@@ -82,17 +105,18 @@
     var timer = '';
 
     // ■動作確認カード■
-    // 犯人
-    // 探偵
+    // 済）犯人
+    // 済）探偵
     // 済）第一発見者
     // 済）アリバイ
     // 済）たくらみ
     // いぬ
-    // 目撃者
+    // 済）目撃者
     // 済）情報交換
     // 済）うわさ
     // 済）取り引き
     // 済）一般人
+    // 済）少年
 
     $(function() {
       var gId = '';
@@ -163,13 +187,42 @@
       // カードを場に置く
       $('#set_card').click(function() {
         $('#message').empty();
+        var card_type = $('#sel_stockcards option:selected').text();
         $.ajax(gId + '/set/' + $('#sel_stockcards').val(),
           {
             type: 'get',
           }
         )
         .done(function(data) {
+          if(data == 'ng'){
+            $('#message').text('そのカードは出せません');
+            return;
+          }
+          console.log(card_type);
           $('#set_card').prop("disabled", true);
+          switch(card_type){
+            case '少年':
+              $.getJSON(gId + '/show_criminal',
+                {
+                  type: 'get',
+                }
+              )
+              .done(function(data) {
+                console.log('data');
+                $('#sec7').show();
+                $('#criminal_player').text(data.nickname);
+              })
+              .fail(function() {
+                $('#message').text('エラーが発生しました');
+              });
+              break;
+            case '目撃者':
+              $('#sec6').show();
+              break;
+            case '探偵':
+              $('#sec8').show();
+              break;
+          }
         })
         .fail(function() {
           $('#message').text('エラーが発生しました');
@@ -243,6 +296,69 @@
         });
       });
 
+      // show card(犬用)
+      $('#show_card2').click(function() {
+        $('#message').empty();
+        var path = gId + '/show_others/' + $('#check_players').val();
+        $.getJSON(path,
+          {
+            type: 'get',
+          }
+        )
+        .done(function(data) {
+          console.log(data);
+          $('#showCards2').children().remove();
+          for(var sIdx in data.stocks){
+            stock = data.stocks[sIdx]
+            $('#showCards2').append('<option value="'+sIdx+'">'+stock.name+'</option>');
+            // $('#showCards2').append('<option value="'+sIdx+'">***</option>');
+          }
+        })
+        .fail(function() {
+          $('#message').text('エラーが発生しました');
+        });
+      });
+
+      $('#suspect_card').click(function() {
+        $('#message').empty();
+        $.getJSON(gId + '/nominate/detective/' + $('#suspect_players').val(),
+          {
+            type: 'get',
+          }
+        )
+        .done(function(data) {
+          if(data.status == 'end'){
+            $('#message').text('犯人を見つけました!!');
+          }else{
+            $('#message').text('犯人ではありませんでした');
+          }
+          $('#sec8').hide();
+        })
+        .fail(function() {
+          $('#message').text('エラーが発生しました');
+        });
+      });
+
+      $('#suspect_card2').click(function() {
+        $('#message').empty();
+        $.getJSON(gId + '/nominate/dog/' + $('#suspect_players2').val() + '/' + $('#showCards2').val(),
+          {
+            type: 'get',
+          }
+        )
+        .done(function(data) {
+          if(data.status == 'end'){
+            $('#message').text('犯人を見つけました!!');
+          }else{
+            $('#message').text('犯人ではありませんでした');
+          }
+          $('#sec9').hide();
+        })
+        .fail(function() {
+          $('#message').text('エラーが発生しました');
+        });
+      });
+
       // Next player
       $('#next').click(function() {
         $('#message').empty();
@@ -257,6 +373,8 @@
           $('#sec4').hide();
           $('#sec5').hide();
           $('#sec6').hide();
+          $('#sec7').hide();
+          $('#sec8').hide();
           $('#set_card').prop("disabled", false);
           $('#show_card').prop('disabled', false);
           $('#message').text('次に移動しました');
@@ -415,13 +533,31 @@
 
               break;
             case 'witness':
-              $('#sec6').show();
-
               if((data.players.length - 1) != $('#check_players').children('option').length){
                 $('#check_players').children().remove();
                 for(var pIdx in data.players){
                   if(pIdx != playerPos){
                     $('#check_players').append('<option value="'+data.players[pIdx].playerid+'">'+data.players[pIdx].nickname+'</option>');
+                  }
+                }
+              }
+              break;
+            case 'detective':
+              if((data.players.length - 1) != $('#suspect_players').children('option').length){
+                $('#suspect_players').children().remove();
+                for(var pIdx in data.players){
+                  if(pIdx != playerPos){
+                    $('#suspect_players').append('<option value="'+data.players[pIdx].playerid+'">'+data.players[pIdx].nickname+'</option>');
+                  }
+                }
+              }
+              break;
+            case 'dog':
+              if((data.players.length - 1) != $('#suspect_players2').children('option').length){
+                $('#suspect_players2').children().remove();
+                for(var pIdx in data.players){
+                  if(pIdx != playerPos){
+                    $('#suspect_players2').append('<option value="'+data.players[pIdx].playerid+'">'+data.players[pIdx].nickname+'</option>');
                   }
                 }
               }
