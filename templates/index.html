@@ -299,8 +299,8 @@
           $('#showCards2').children().remove();
           for(var sIdx in data.stocks){
             stock = data.stocks[sIdx]
-            $('#showCards2').append('<option value="'+sIdx+'">'+stock.name+'</option>');
-            // $('#showCards2').append('<option value="'+sIdx+'">***</option>');
+            // $('#showCards2').append('<option value="'+sIdx+'">'+stock.name+'</option>');
+            $('#showCards2').append('<option value="'+sIdx+'">***</option>');
           }
         })
         .fail(function() {
