@@ -39,6 +39,7 @@
         <h4>Your Cards</h4>
         <table id='stockCards'>
         </table><br/>
+        <div id='criminal'></div>
         <hr/>
       </div>
       <div id='sec3' style='display:none'>
@@ -433,6 +434,12 @@
                   $('#sel_stockcards').append('<option value="' + sIdx + '">' + stock.name + '</option>');
                 }
               }
+
+              // たくらみ判定
+              if(data.players[playerPos].criminal == true){
+                $('#criminal').text('犯人が勝ったとき、あなたも勝ちです');
+              }
+
               break;
             // ==========================
             case 'deal':
