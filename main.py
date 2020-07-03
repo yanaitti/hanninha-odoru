@@ -275,7 +275,7 @@ def nominate_dog(gameid, playerid, cardnum):
 def show_criminal(gameid):
     game = cache.get(gameid)
 
-    criminal = [_player for _player in game['players'] if len([_card for _card in _player['stocks'] if _card['type'] == 1]) > 0]
+    criminal = [_player for _player in game['players'] if len([_card for _card in _player['stocks'] if _card['type'] == 1]) > 0][0]
 
     return json.dumps(criminal)
 
