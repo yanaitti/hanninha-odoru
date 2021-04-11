@@ -127,8 +127,13 @@ def create_game(nickname=''):
     return gameid
 
 
-# join the game
 @app.route('/<gameid>/join')
+def invited_join_game(gameid):
+    print('gameid:' + gameid)
+    return render_template('index.html', gameid=gameid)
+
+
+# join the game
 @app.route('/<gameid>/join/<nickname>')
 def join_game(gameid, nickname='default'):
     game = cache.get(gameid)
